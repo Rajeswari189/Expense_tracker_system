@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expense Tracker - Bootstrap</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body { background: #f8f9fa; }
+    .card-rounded { border-radius: 1rem; }
+    .table-responsive { max-height: 420px; overflow: auto; }
+    @media (max-width: 576px) {
+      .desktop-only { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="#">ExpenseTracker</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#addExpense">Add Expense</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+    <div class="row g-3">
+      <!-- Left column: form -->
+      <div class="col-12 col-lg-4">
+        <div class="card card-rounded shadow-sm p-3">
+          <h5 class="card-title">Add / Edit Expense</h5>
+          <form id="expenseForm">
+            <input type="hidden" id="expenseId">
+            <div class="mb-2">
+              <label class="form-label">Amount</label>
+              <input type="number" step="0.01" min="0" id="amount" class="form-control" placeholder="0.00" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Category</label>
+              <select id="category" class="form-select" required>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Bills">Bills</option>
+                <option value="Health">Health</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Date</label>
+              <input type="date" id="date" class="form-control" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Description (optional)</label>
+              <input type="text" id="description" class="form-control" placeholder="e.g., lunch, taxi, grocery">
+            </div>
+            <div class="d-grid gap-2 d-sm-flex">
+              <button type="submit" class="btn btn-primary" id="saveBtn">Save Expense</button>
+              <button type="button" class="btn btn-outline-secondary" id="clearBtn">Clear</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card card-rounded shadow-sm p-3 mt-3">
+          <h6>Quick Filters</h6>
+          <div class="d-flex gap-2 flex-wrap">
+            <select id="filterMonth" class="form-select w-100 w-md-50">
+              <option value="all">All months</option>
+            </select>
+            <select id="filterCategory" class="form-select w-100 w-md-50">
+              <option value="all">All categories</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Bills">Bills</option>
+              <option value="Health">Health</option>
+              <option value="Other">Other</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary mt-1" id="applyFilter">Apply</button>
+            <button class="btn btn-sm btn-outline-danger mt-1" id="clearFilter">Reset</button>
+          </div>
+        </div>
+
+        <div class="card card-rounded shadow-sm p-3 mt-3">
+          <h6>Summary</h6>
+          <div class="d-flex justify-content-between">
+            <div>
+              <small class="text-muted">Total</small>
+              <div id="totalAmount" class="h5 mb-0">₹0.00</div>
+            </div>
+            <div class="text-end desktop-only">
+              <small class="text-muted">Expenses</small>
+              <div id="countExpenses" class="h5 mb-0">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: list and chart -->
+      <div class="col-12 col-lg-8">
+        <div class="card card-rounded shadow-sm p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Expenses</h5>
+            <div>
+              <button class="btn btn-outline-danger btn-sm" id="clearAll">Clear All</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light position-sticky top-0">
+                <tr>
+                  <th>Amount</th>
+                  <th class="desktop-only">Category</th>
+                  <th>Date</th>
+                  <th class="desktop-only">Description</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="expensesList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="card card-rounded shadow-sm p-3">
+              <h6>Category Breakdown</h6>
+              <canvas id="categoryChart" height="220"></canvas>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="card card-rounded shadow-sm p-3">
+              <h6>Recent (5)</h6>
+              <ul id="recentList" class="list-group list-group-flush"></ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center py-3 small text-muted">Expense Tracker • Local-only • Responsive • Built with Bootstrap</footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Simple Expense Tracker using localStorage
+    const STORAGE_KEY = 'expenses_v1';
+
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+    function loadExpenses() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (e) { return []; }
+    }
+
+    function saveExpenses(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+    // Populate month filter with recent months (past 12)
+    function initMonthFilter() {
+      const sel = document.getElementById('filterMonth');
+      const now = new Date();
+      for (let i=0;i<12;i++){
+        const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const val = d.toISOString().slice(0,7); // YYYY-MM
+        const opt = document.createElement('option');
+        opt.value = val; opt.text = d.toLocaleString(undefined, { month: 'short', year: 'numeric' });
+        sel.appendChild(opt);
+      }
+    }
+
+    // Render functions
+    function render() {
+      const expenses = loadExpenses();
+      const list = document.getElementById('expensesList');
+      const recent = document.getElementById('recentList');
+      list.innerHTML = '';
+      recent.innerHTML = '';
+
+      const filterMonth = document.getElementById('filterMonth').value;
+      const filterCategory = document.getElementById('filterCategory').value;
+
+      let filtered = expenses.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
+      if (filterMonth !== 'all') filtered = filtered.filter(e => e.date.slice(0,7) === filterMonth);
+      if (filterCategory !== 'all') filtered = filtered.filter(e => e.category === filterCategory);
+
+      let total = 0;
+      filtered.forEach(exp => {
+        total += Number(exp.amount) || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>₹${Number(exp.amount).toFixed(2)}</td>
+          <td class="desktop-only">${exp.category}</td>
+          <td>${exp.date}</td>
+          <td class="desktop-only">${exp.description || ''}</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-secondary" data-id="${exp.id}" data-action="edit">Edit</button>
+              <button class="btn btn-outline-danger" data-id="${exp.id}" data-action="delete">Delete</button>
+            </div>
+          </td>
+        `;
+        list.appendChild(tr);
+      });
+
+      // summary
+      document.getElementById('totalAmount').textContent = `₹${total.toFixed(2)}`;
+      document.getElementById('countExpenses').textContent = filtered.length;
+
+      // recent
+      expenses.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,5).forEach(exp=>{
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-start';
+        li.innerHTML = `<div><strong>₹${Number(exp.amount).toFixed(2)}</strong><div class="small text-muted">${exp.category} • ${exp.date}</div></div>`;
+        recent.appendChild(li);
+      });
+
+      // chart
+      updateChart(filtered);
+    }
+
+    // Chart.js
+    let categoryChart = null;
+    function updateChart(data) {
+      const ctx = document.getElementById('categoryChart');
+      const sums = {};
+      data.forEach(d=> { sums[d.category] = (sums[d.category]||0) + Number(d.amount); });
+      const labels = Object.keys(sums);
+      const values = labels.map(l => sums[l]);
+
+      if (!categoryChart) {
+        categoryChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels, datasets: [{ data: values }] },
+          options: { plugins: { legend: { position: 'bottom' } } }
+        });
+      } else {
+        categoryChart.data.labels = labels;
+        categoryChart.data.datasets[0].data = values;
+        categoryChart.update();
+      }
+    }
+
+    // Form handlers
+    document.getElementById('expenseForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const id = document.getElementById('expenseId').value;
+      const amount = parseFloat(document.getElementById('amount').value) || 0;
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const description = document.getElementById('description').value.trim();
+
+      if (!date) { alert('Please provide date'); return; }
+      if (amount <= 0) { alert('Amount must be greater than 0'); return; }
+
+      const expenses = loadExpenses();
+      if (id) {
+        const idx = expenses.findIndex(x=>x.id===id);
+        if (idx>=0) { expenses[idx] = { id, amount, category, date, description }; }
+      } else {
+        expenses.push({ id: uid(), amount, category, date, description });
+      }
+      saveExpenses(expenses);
+      this.reset(); document.getElementById('expenseId').value = '';
+      render();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>{ document.getElementById('expenseForm').reset(); document.getElementById('expenseId').value=''; });
+
+    document.getElementById('expensesList').addEventListener('click', function(e){
+      const btn = e.target.closest('button'); if(!btn) return;
+      const id = btn.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+      const expenses = loadExpenses();
+      if (action === 'delete') {
+        if (!confirm('Delete this expense?')) return;
+        const updated = expenses.filter(x=>x.id!==id);
+        saveExpenses(updated); render();
+      } else if (action === 'edit') {
+        const ex = expenses.find(x=>x.id===id); if(!ex) return;
+        document.getElementById('expenseId').value = ex.id;
+        document.getElementById('amount').value = ex.amount;
+        document.getElementById('category').value = ex.category;
+        document.getElementById('date').value = ex.date;
+        document.getElementById('description').value = ex.description;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    // Filters
+    document.getElementById('applyFilter').addEventListener('click', render);
+    document.getElementById('clearFilter').addEventListener('click', ()=>{
+      document.getElementById('filterMonth').value = 'all';
+      document.getElementById('filterCategory').value = 'all';
+      render();
+    });
+
+    // Clear all
+    document.getElementById('clearAll').addEventListener('click', ()=>{
+      if (!confirm('Clear ALL expenses? This cannot be undone.')) return;
+      localStorage.removeItem(STORAGE_KEY); render();
+    });
+
+    // initialize
+    initMonthFilter();
+    // set default date to today
+    document.getElementById('date').value = new Date().toISOString().slice(0,10);
+    render();
+  </script>
+</body>
+</html>
